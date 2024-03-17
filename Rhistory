@@ -1,0 +1,512 @@
+dplyr::mutate(Frame_Quantity = as.numeric(as.character(Frame_Quantity)))) %>%
+droplevels()
+compare1_ID1plot <- ggplot(dfsum, aes(x=Frame_Quantity, y=acc, color = task))+ #setting up x and y axes
+stat_eye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se, fill = task), show_interval = FALSE)+
+ylab("Accuracy")+ #naming y-axis
+xlab("Number of Frames")+ #naming x-axis
+labs(y = "Accuracy", x ="Number of Frames", title = "Identify 1 vs Compare 1",
+fill = "Task", color = "Task")+  #naming the figure (or the plot)
+theme_tidybayes() + #theme of the plot
+scale_x_continuous(breaks=seq(2, 70, 4))+
+scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+geom_smooth(method = lm,se=F, aes(color = task)) +
+scale_color_manual(values =c("grey60","blue")) +
+scale_fill_manual(values =c("grey60","blue")) +
+theme(strip.text.x = element_blank(),
+strip.background = element_rect(colour="white", fill="white"),
+legend.position=c(.45,.15),
+plot.title = element_text(size = 12, hjust = 0.5),
+axis.text.x = element_text(angle = 90, hjust = 1, size=7, color =  "black")
+)
+# PANE 2 --------------
+dfpane2 <- df_full %>%
+dplyr::filter(task %in% c("ID2","C2")) %>%
+dplyr::mutate(acc = as.numeric(as.character(acc)))
+dfsum <- summarySEwithin(data = dfpane2, measurevar = "acc",withinvars = c("Frame_Quantity"),betweenvars = "task", idvar = "ResponseId") %>%
+dplyr::arrange(Frame_Quantity) %>%
+dplyr::mutate(Frame_Quantity = as.numeric(as.character(Frame_Quantity)))
+compare2_ID2plot <- ggplot(dfsum, aes(x=Frame_Quantity, y=acc, group = task))+ #setting up x and y axes
+stat_eye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se, fill = task), show_interval = FALSE)+
+labs(y = "Accuracy", x ="Number of Frames", title = "Identify 2 vs Compare 2",
+fill = "Task", color = "Task")+  #naming the figure (or the plot)
+theme_tidybayes() + #theme of the plot
+scale_x_continuous(breaks=seq(2, 70, 4))+
+scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+geom_smooth(method = lm,se=F, aes(color = task)) +
+scale_color_manual(values =c("grey60","blue")) +
+scale_fill_manual(values =c("grey60","blue")) +
+theme(strip.text.x = element_blank(),
+strip.background = element_rect(colour="white", fill="white"),
+legend.position=c(.45,.15),
+plot.title = element_text(size = 12, hjust = 0.5),
+axis.text.x = element_text(angle = 90, hjust = 1, size=7, color =  "black")
+)
+# PANE 3 --------------
+Id3pane <- Id3plot + labs(title = "Identify 3") +
+scale_color_manual(values ="grey60") +
+scale_fill_manual(values ="grey60") +
+theme(plot.title = element_text(size = 12, hjust = 0.5),
+axis.text.x = element_text(angle = 90, hjust = 1, size=7, color =  "black"))
+# PANE 4 --------------
+summ1pane <- summ1_plot +labs(title = "Summary 1") +
+scale_color_manual(values ="grey60") +
+scale_fill_manual(values ="grey60") +
+theme(plot.title = element_text(size = 12, hjust = 0.5),
+axis.text.x = element_text(angle = 90, hjust = 1, size=7, color =  "black"))
+# PANE 5 ---------------
+summ2pane <- summ2_plot +labs(title = "Summary 2") +
+scale_color_manual(values ="grey60") +
+scale_fill_manual(values ="grey60") +
+theme(plot.title = element_text(size = 12, hjust = 0.5),
+axis.text.x = element_text(angle = 90, hjust = 1, size=7, color = "black"))
+# pdf(file = "figures/Experiment1_Full_Revised.pdf", width = 12.5, height=5) #saving figure
+grid.arrange(compare1_ID1plot,compare2_ID2plot,Id3pane,summ1pane,summ2pane, ncol = 5)
+compare1_ID1plot
+compare2_ID2plot
+Id3pane
+# ID3 referent -------------
+df_fullId3 <- df_full %>%
+dplyr::mutate(task = fct_relevel(task, "ID3", "ID2", "ID1","C1","C2","S1"))
+df_fullComp1 <- df_full %>%
+mutate(task = fct_relevel(task, "C1","ID1","ID2","ID3","C2","S1"))
+df_fullComp2 <- df_full %>%
+mutate(task = fct_relevel(task, "C2", "C1","ID1","ID2","ID3","S1"))
+df_fullSumm1 <- df_full %>%
+mutate(task = fct_relevel(task, "S1","C1","ID1","ID2","ID3","C2"))
+# PANE 1 --------------
+dfpane1 <- df_full %>%
+dplyr::filter(task %in% c("ID1","C1"))%>%
+dplyr::mutate(acc = as.numeric(as.character(acc)))
+dfsum <- as_tibble(summarySEwithin(data = dfpane1, measurevar = "acc",withinvars = c("Frame_Quantity"),betweenvars = c("task"), idvar = "ResponseId") %>%
+dplyr::arrange(Frame_Quantity) %>%
+dplyr::mutate(Frame_Quantity = as.numeric(as.character(Frame_Quantity)))) %>%
+droplevels()
+compare1_ID1plot <- ggplot(dfsum, aes(x=Frame_Quantity, y=acc, color = task))+ #setting up x and y axes
+stat_eye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se, fill = task), show_interval = FALSE)+
+ylab("Accuracy")+ #naming y-axis
+xlab("Number of Frames")+ #naming x-axis
+labs(y = "Accuracy", x ="Number of Frames", title = "Identify 1 vs Compare 1",
+fill = "Task", color = "Task")+  #naming the figure (or the plot)
+theme_tidybayes() + #theme of the plot
+scale_x_continuous(breaks=seq(2, 70, 4))+
+scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+geom_smooth(method = lm,se=F, aes(color = task)) +
+scale_color_manual(values =c("grey60","blue")) +
+scale_fill_manual(values =c("grey60","blue")) +
+theme(strip.text.x = element_blank(),
+strip.background = element_rect(colour="white", fill="white"),
+legend.position=c(.45,.15),
+plot.title = element_text(size = 12, hjust = 0.5),
+axis.text.x = element_text(angle = 90, hjust = 1, size=7, color =  "black")
+)
+# PANE 2 --------------
+dfpane2 <- df_full %>%
+dplyr::filter(task %in% c("ID2","C2")) %>%
+dplyr::mutate(acc = as.numeric(as.character(acc)))
+dfsum <- summarySEwithin(data = dfpane2, measurevar = "acc",withinvars = c("Frame_Quantity"),betweenvars = "task", idvar = "ResponseId") %>%
+dplyr::arrange(Frame_Quantity) %>%
+dplyr::mutate(Frame_Quantity = as.numeric(as.character(Frame_Quantity)))
+compare2_ID2plot <- ggplot(dfsum, aes(x=Frame_Quantity, y=acc, group = task))+ #setting up x and y axes
+stat_eye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se, fill = task), show_interval = FALSE)+
+labs(y = "Accuracy", x ="Number of Frames", title = "Identify 2 vs Compare 2",
+fill = "Task", color = "Task")+  #naming the figure (or the plot)
+theme_tidybayes() + #theme of the plot
+scale_x_continuous(breaks=seq(2, 70, 4))+
+scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+geom_smooth(method = lm,se=F, aes(color = task)) +
+scale_color_manual(values =c("grey60","blue")) +
+scale_fill_manual(values =c("grey60","blue")) +
+theme(strip.text.x = element_blank(),
+strip.background = element_rect(colour="white", fill="white"),
+legend.position=c(.45,.15),
+plot.title = element_text(size = 12, hjust = 0.5),
+axis.text.x = element_text(angle = 90, hjust = 1, size=7, color =  "black")
+)
+# PANE 3 --------------
+Id3pane <- Id3plot + labs(title = "Identify 3") +
+scale_color_manual(values ="grey60") +
+scale_fill_manual(values ="grey60") +
+theme(plot.title = element_text(size = 12, hjust = 0.5),
+axis.text.x = element_text(angle = 90, hjust = 1, size=7, color =  "black"))
+Id3pane
+Id3plot
+# ID3 referent -------------
+df_fullId3 <- df_full %>%
+dplyr::mutate(task = fct_relevel(task, "ID3", "ID2", "ID1","C1","C2","S1"))
+modfull_Id3 <- glmer(acc ~ task * Frame_Quantity + (1|Trial) + (1|ResponseId), data = df_fullId3,
+family = binomial(link = "logit"))
+dfaccID3 <- as_tibble(Exp1_ID3_df %>%
+dplyr::filter(ResponseId %ni% c("R_x4PGi1OrtXIT9VD",
+"R_cwnap7vKugRKV9f",
+"R_2Yy4VtavmtMv0vA")) %>%
+dplyr::mutate(Correct_Frames = ifelse(geom_hline < Correct_FramesValue, 1,0)) %>%
+dplyr::mutate(Correct_Frames = ifelse(Frame_Quantity == "18" & Trial == "12" & Individual_FramesNum == "14", 0,Correct_Frames)) %>%
+dplyr::mutate(acc = ifelse(Correct_Frames == ResponseCode,1,0)) %>%
+dplyr::group_by(ResponseId,Frame_Quantity,Trial) %>%
+dplyr::summarise(acc = ifelse(all(acc == 1),1,0)) %>%
+dplyr::mutate(Frame_Quantity = as.numeric(Frame_Quantity),
+Trial = as.numeric(Trial),
+acc = as.numeric(as.character(acc)))) %>%
+dplyr::mutate(task = "ID3")
+mod1 <- glmer(acc ~ Frame_Quantity +  (1|Trial)+(1|ResponseId), data = dfaccID3, family = binomial(link = "logit"))
+summary(mod1)
+dfsum <- summarySEwithin(data = dfaccID3, measurevar = "acc",withinvars = c("Frame_Quantity"), idvar = "ResponseId") %>%
+arrange(Frame_Quantity) %>%
+mutate(Frame_Quantity = as.numeric(as.character(Frame_Quantity)))
+Id3plot <- ggplot(dfsum, aes(x=Frame_Quantity, y=acc))+ #setting up x and y axes
+stat_eye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), show_interval = FALSE)+
+ylab("Accuracy")+ #naming y-axis
+xlab("Number of Frames")+ #naming x-axis
+ggtitle("Experiment 1 (Over Hline)")+  #naming the figure (or the plot)
+theme_tidybayes() + #theme of the plot
+scale_x_continuous(breaks=seq(2, 70, 4))+
+scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+geom_smooth(method = lm,se=F)
+Id3plot
+dfaccC1 <- as_tibble(Exp1_C1_df %>%
+dplyr::filter(ResponseId %ni% c("R_20VsPuF4cqKupYI")) %>%
+dplyr::mutate(acc = ifelse(Individual_FramesNum == Correct_FramesNum, 1,0)) %>%
+dplyr::mutate(across(c("Trial", "Frame_Quantity"),.fns = as.numeric),
+acc = as.numeric(as.character(acc))) %>%
+dplyr::mutate(ResponseId = factor(ResponseId)) %>%
+dplyr::select(ResponseId,Trial,Frame_Quantity,acc))%>%
+dplyr::mutate(task = "C1")
+mod1 <- glmer(acc ~ Frame_Quantity +  (1|Trial)+(1|ResponseId), data = dfaccC1, family = binomial(link = "logit"))
+summary(mod1)
+dfsum <- summarySEwithin(data = dfaccC1, measurevar = "acc",withinvars = c("Frame_Quantity"), idvar = "ResponseId") %>%
+arrange(Frame_Quantity) %>%
+mutate(Frame_Quantity = as.numeric(as.character(Frame_Quantity)))
+compare1_maxplot <- ggplot(dfsum, aes(x=Frame_Quantity, y=acc))+ #setting up x and y axes
+stat_eye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), show_interval = FALSE)+
+ylab("Accuracy")+ #naming y-axis
+xlab("Number of Frames")+ #naming x-axis
+ggtitle("Exp 1 (Compare 1 Max)")+  #naming the figure (or the plot)
+theme_tidybayes() + #theme of the plot
+scale_x_continuous(breaks=seq(2, 70, 4))+
+scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+geom_smooth(method = lm,se=F)
+compare1_maxplot
+dfaccC2 <- as_tibble(Exp1_C2_df %>%
+dplyr::filter(ResponseId %ni% c("R_2zBXYCpGBqaiJXF")) %>%
+dplyr::mutate(acc = ifelse(Individual_FramesNum == Correct_FramesNum, 1,0)) %>%
+dplyr::mutate(across(c("Trial", "Frame_Quantity"),.fns = as.numeric),
+acc = as.numeric(as.character(acc))) %>%
+dplyr::mutate(ResponseId = factor(ResponseId)) %>%
+dplyr::select(ResponseId,Trial,Frame_Quantity,acc))%>%
+dplyr::mutate(task = "C2")
+mod_meanrange <- glmer(acc ~ Frame_Quantity +  (1|Trial)+(1|ResponseId), data = dfaccC2, family = binomial(link = "logit"))
+summary(mod_meanrange)
+dfsum <- summarySEwithin(data = dfaccC2, measurevar = "acc",withinvars = c("Frame_Quantity"), idvar = "ResponseId") %>%
+arrange(Frame_Quantity) %>%
+mutate(Frame_Quantity = as.numeric(as.character(Frame_Quantity)))
+compare2_meanrange <- ggplot(dfsum, aes(x=Frame_Quantity, y=acc))+ #setting up x and y axes
+stat_eye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), show_interval = FALSE)+
+ylab("Accuracy")+ #naming y-axis
+xlab("Number of Frames")+ #naming x-axis
+ggtitle("Exp 1 (Compare 2 MeanRange)")+  #naming the figure (or the plot)
+theme_tidybayes() + #theme of the plot
+scale_x_continuous(breaks=seq(2, 70, 4))+
+scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+geom_smooth(method = lm,se=F)+
+theme(plot.title = element_text(size = 12, hjust = 0.5),
+axis.text.x = element_text(angle = 90, hjust = 1, size=7, color =  "black"))
+compare2_meanrange
+load(file = "clean_data/C2Analysis.RData")
+# MEAN -------------------------------
+dfacc <- as_tibble(dfjoinedMean %>%
+dplyr::mutate(acc = ifelse(Individual_FramesNum == Correct_FramesNum, 1,0)) %>%
+dplyr::mutate(across(c("Trial", "Frame_Quantity"),.fns = as.numeric),
+acc = as.numeric(as.character(acc))) %>%
+dplyr::mutate(ResponseId = factor(ResponseId)) %>%
+dplyr::select(ResponseId,Trial,Frame_Quantity,acc))
+dfsum <- summarySEwithin(data = dfacc, measurevar = "acc",withinvars = c("Frame_Quantity"), idvar = "ResponseId") %>%
+arrange(Frame_Quantity) %>%
+mutate(Frame_Quantity = as.numeric(as.character(Frame_Quantity)))
+mod_mean <- glmer(acc ~ Frame_Quantity +  (1|Trial)+(1|ResponseId), data = dfacc, family = binomial(link = "logit"))
+summary(mod_mean)
+compare2_mean <- ggplot(dfsum, aes(x=Frame_Quantity, y=acc))+ #setting up x and y axes
+stat_eye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), show_interval = FALSE)+
+ylab("Accuracy")+ #naming y-axis
+xlab("Number of Frames")+ #naming x-axis
+ggtitle("Exp 1 (Compare 2 Mean)")+  #naming the figure (or the plot)
+theme_tidybayes() + #theme of the plot
+scale_x_continuous(breaks=seq(2, 70, 4))+
+scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+geom_smooth(method = lm,se=F)+
+theme(plot.title = element_text(size = 12, hjust = 0.5),
+axis.text.x = element_text(angle = 90, hjust = 1, size=7, color =  "black"))
+# RANGE -------------------------------
+dfacc <- as_tibble(dfjoinedRange %>%
+dplyr::mutate(acc = ifelse(Individual_FramesNum == Correct_FramesNum, 1,0)) %>%
+dplyr::mutate(across(c("Trial", "Frame_Quantity"),.fns = as.numeric),
+acc = as.numeric(as.character(acc))) %>%
+dplyr::mutate(ResponseId = factor(ResponseId)) %>%
+dplyr::select(ResponseId,Trial,Frame_Quantity,acc))
+dfsum <- summarySEwithin(data = dfacc, measurevar = "acc",withinvars = c("Frame_Quantity"), idvar = "ResponseId") %>%
+arrange(Frame_Quantity) %>%
+mutate(Frame_Quantity = as.numeric(as.character(Frame_Quantity)))
+mod_range <- glmer(acc ~ Frame_Quantity +  (1|Trial)+(1|ResponseId), data = dfacc, family = binomial(link = "logit"))
+summary(mod_range)
+compare2_range <- ggplot(dfsum, aes(x=Frame_Quantity, y=acc))+ #setting up x and y axes
+stat_eye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), show_interval = FALSE)+
+ylab("Accuracy")+ #naming y-axis
+xlab("Number of Frames")+ #naming x-axis
+ggtitle("Exp 1 (Compare 2 Range)")+  #naming the figure (or the plot)
+theme_tidybayes() + #theme of the plot
+scale_x_continuous(breaks=seq(2, 70, 4))+
+scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+geom_smooth(method = lm,se=F)+
+theme(plot.title = element_text(size = 12, hjust = 0.5),
+axis.text.x = element_text(angle = 90, hjust = 1, size=7, color =  "black"))
+# meanrangeplot, meanplot, rangeplot,Id3plot,
+# pdf(file = "figures/Comp2_three.pdf", width = 8, height=5) #saving figure
+grid.arrange(compare2_meanrange,compare2_mean,compare2_range,  ncol = 3)
+# dev.off()
+dfaccS1 <- as_tibble(Exp1_S1_df %>%
+dplyr::filter(ResponseId %ni% c("R_1mVPKEmiK9hWDq2",
+"R_2sX7PJ5Cje0hVFn",
+"R_xtqJDFq6MxDMmCB")) %>%
+dplyr::mutate(acc = ifelse(ResponseCode == Correct_FramesNum, 1,0)) %>%
+dplyr::mutate(across(c("Trial", "Frame_Quantity"),.fns = as.numeric),
+acc = as.numeric(as.character(acc))) %>%
+dplyr::mutate(ResponseId = factor(ResponseId)) %>%
+dplyr::select(ResponseId,Trial,Frame_Quantity,acc))%>%
+dplyr::mutate(task = "S1")
+modsum1 <- glmer(acc ~ Frame_Quantity +  (1|Trial)+(1|ResponseId), data = dfaccS1, family = binomial(link = "logit"))
+summary(modsum1)
+dfsum <- summarySEwithin(data = dfaccS1, measurevar = "acc",withinvars = c("Frame_Quantity"), idvar = "ResponseId") %>%
+arrange(Frame_Quantity) %>%
+mutate(Frame_Quantity = as.numeric(as.character(Frame_Quantity)))
+summ1_plot <- ggplot(dfsum, aes(x=Frame_Quantity, y=acc))+ #setting up x and y axes
+stat_eye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), show_interval = FALSE)+
+ylab("Accuracy")+ #naming y-axis
+xlab("Number of Frames")+ #naming x-axis
+ggtitle("Experiment 1 (Summary 1)")+  #naming the figure (or the plot)
+theme_tidybayes() + #theme of the plot
+scale_x_continuous(breaks=seq(2, 70, 4))+
+scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+geom_smooth(method = lm,se=F)
+summ1_plot
+dfaccS2 <- as_tibble(Exp1_S2_df %>%
+# dplyr::filter(ResponseId %ni% c("R_3q87De0UcHnqWcD",
+#                                 "R_PU7fm5BV3Wkjvqh",
+#                                 "R_ZIvrMf4V7ac7N97",
+#                                 "R_1JJf0yMHhxY1vPi",
+#                                 "R_2X0t3WmKsvdeDuO",
+#                                 "R_3m9uN5B0pCg6A84", #Had 212 trials outside of MaxRange
+#                                 "R_erqfEjsMzi4ChQ"  #Had 232 trials outside of MaxRange
+#                                 )) %>%
+dplyr::mutate(error = abs(as.numeric(Response) - Correct_Mean)) %>%
+dplyr::mutate(error_perc = error/MaxRange) %>%
+dplyr::mutate(acc = 1 - (error/MaxRange)) %>%
+dplyr::filter(acc > 0) %>%
+dplyr::mutate(across(c("Trial", "Frame_Quantity"),.fns = as.numeric),
+acc = as.numeric(as.character(acc))) %>%
+dplyr::mutate(ResponseId = factor(ResponseId)) %>%
+dplyr::select(ResponseId,Trial,Frame_Quantity,error_perc,acc)) %>%
+dplyr::mutate(task = "S2")
+mean(dfaccS2$acc)
+sd(dfaccS2$acc)
+modsum2 <- lmer(acc ~ Frame_Quantity +  (1|Trial)+(1|ResponseId), data = dfaccS2)
+summary(modsum2)
+dfsum <- summarySEwithin(data = dfaccS2, measurevar = "acc",withinvars = c("Frame_Quantity"), idvar = "ResponseId") %>%
+arrange(Frame_Quantity) %>%
+mutate(Frame_Quantity = as.numeric(as.character(Frame_Quantity)))
+summ2_plot <- ggplot(dfsum, aes(x=Frame_Quantity, y=acc))+ #setting up x and y axes
+stat_eye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), show_interval = FALSE)+
+ylab("Proportional Accuracy (1 - Error)")+ #naming y-axis
+xlab("Number of Frames")+ #naming x-axis
+ggtitle("Experiment 1 (Summary 2)")+  #naming the figure (or the plot)
+theme_tidybayes() + #theme of the plot
+scale_x_continuous(breaks=seq(2, 70, 4))+
+scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+geom_smooth(method = lm,se=F)
+summ2_plot
+df_full <- bind_rows(list(
+"ID1" = dfaccID1,
+"ID2" = dfaccID2,
+"ID3" = dfaccID3,
+"C1"=dfaccC1,
+"C2"=dfaccC2,
+"S1"=dfaccS1), .id = 'source') %>%
+dplyr::mutate(task = factor(task, levels = c("ID1","ID2","ID3","C1","C2","S1")))
+# PANE 1 --------------
+dfpane1 <- df_full %>%
+dplyr::filter(task %in% c("ID1","C1"))%>%
+dplyr::mutate(acc = as.numeric(as.character(acc)))
+dfsum <- as_tibble(summarySEwithin(data = dfpane1, measurevar = "acc",withinvars = c("Frame_Quantity"),betweenvars = c("task"), idvar = "ResponseId") %>%
+dplyr::arrange(Frame_Quantity) %>%
+dplyr::mutate(Frame_Quantity = as.numeric(as.character(Frame_Quantity)))) %>%
+droplevels()
+compare1_ID1plot <- ggplot(dfsum, aes(x=Frame_Quantity, y=acc, color = task))+ #setting up x and y axes
+stat_eye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se, fill = task), show_interval = FALSE)+
+ylab("Accuracy")+ #naming y-axis
+xlab("Number of Frames")+ #naming x-axis
+labs(y = "Accuracy", x ="Number of Frames", title = "Identify 1 vs Compare 1",
+fill = "Task", color = "Task")+  #naming the figure (or the plot)
+theme_tidybayes() + #theme of the plot
+scale_x_continuous(breaks=seq(2, 70, 4))+
+scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+geom_smooth(method = lm,se=F, aes(color = task)) +
+scale_color_manual(values =c("grey60","blue")) +
+scale_fill_manual(values =c("grey60","blue")) +
+theme(strip.text.x = element_blank(),
+strip.background = element_rect(colour="white", fill="white"),
+legend.position=c(.45,.15),
+plot.title = element_text(size = 12, hjust = 0.5),
+axis.text.x = element_text(angle = 90, hjust = 1, size=7, color =  "black")
+)
+# PANE 2 --------------
+dfpane2 <- df_full %>%
+dplyr::filter(task %in% c("ID2","C2")) %>%
+dplyr::mutate(acc = as.numeric(as.character(acc)))
+dfsum <- summarySEwithin(data = dfpane2, measurevar = "acc",withinvars = c("Frame_Quantity"),betweenvars = "task", idvar = "ResponseId") %>%
+dplyr::arrange(Frame_Quantity) %>%
+dplyr::mutate(Frame_Quantity = as.numeric(as.character(Frame_Quantity)))
+compare2_ID2plot <- ggplot(dfsum, aes(x=Frame_Quantity, y=acc, group = task))+ #setting up x and y axes
+stat_eye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se, fill = task), show_interval = FALSE)+
+labs(y = "Accuracy", x ="Number of Frames", title = "Identify 2 vs Compare 2",
+fill = "Task", color = "Task")+  #naming the figure (or the plot)
+theme_tidybayes() + #theme of the plot
+scale_x_continuous(breaks=seq(2, 70, 4))+
+scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+geom_smooth(method = lm,se=F, aes(color = task)) +
+scale_color_manual(values =c("grey60","blue")) +
+scale_fill_manual(values =c("grey60","blue")) +
+theme(strip.text.x = element_blank(),
+strip.background = element_rect(colour="white", fill="white"),
+legend.position=c(.45,.15),
+plot.title = element_text(size = 12, hjust = 0.5),
+axis.text.x = element_text(angle = 90, hjust = 1, size=7, color =  "black")
+)
+# PANE 3 --------------
+Id3pane <- Id3plot + labs(title = "Identify 3") +
+scale_color_manual(values ="grey60") +
+scale_fill_manual(values ="grey60") +
+theme(plot.title = element_text(size = 12, hjust = 0.5),
+axis.text.x = element_text(angle = 90, hjust = 1, size=7, color =  "black"))
+# PANE 4 --------------
+summ1pane <- summ1_plot +labs(title = "Summary 1") +
+scale_color_manual(values ="grey60") +
+scale_fill_manual(values ="grey60") +
+theme(plot.title = element_text(size = 12, hjust = 0.5),
+axis.text.x = element_text(angle = 90, hjust = 1, size=7, color =  "black"))
+# PANE 5 ---------------
+summ2pane <- summ2_plot +labs(title = "Summary 2") +
+scale_color_manual(values ="grey60") +
+scale_fill_manual(values ="grey60") +
+theme(plot.title = element_text(size = 12, hjust = 0.5),
+axis.text.x = element_text(angle = 90, hjust = 1, size=7, color = "black"))
+# pdf(file = "figures/Experiment1_Full_Revised.pdf", width = 12.5, height=5) #saving figure
+grid.arrange(compare1_ID1plot,compare2_ID2plot,Id3pane,summ1pane,summ2pane, ncol = 5)
+pdf(file = "figures/Experiment1_Full_Revised.pdf", width = 12.5, height=5) #saving figure
+grid.arrange(compare1_ID1plot,compare2_ID2plot,Id3pane,summ1pane,summ2pane, ncol = 5)
+dev.off()
+round(sort(tapply(df_full$acc, df_full[,"task"], mean)),2)
+round(sort(tapply(df_full$acc, df_full[,"task"], sd)),2)
+round(tapply(df_full$acc, df_full[,"task"], mean),2)
+round(tapply(df_full$acc, df_full[,"task"], sd),2)
+mean(dfaccS2$acc,na.rm =T)
+sd(dfaccS2$acc,na.rm =T)
+mean(dfaccS2$acc,na.rm =T)
+sd(dfaccS2$acc,na.rm =T)
+round(sort(tapply(df_full$acc, df_full[,"task"], mean)),2)
+round(sort(tapply(df_full$acc, df_full[,"task"], sd)),2)
+round(tapply(df_full$acc, df_full[,"task"], mean),2)
+round(sort(tapply(df_full$acc, df_full[,"task"], mean)),2)
+round(sort(tapply(df_full$acc, df_full[,"task"], mean)),2)
+df_ID2C2 <- df_full %>%
+filter(task %in% c("ID2","C2"))
+modsub_2 <- glmer(acc ~ task * Frame_Quantity + (1|Trial) + (1|ResponseId), data = df_ID2C2,
+family = binomial(link = "logit"))
+modsub_2 <- glmer(acc ~ task * Frame_Quantity + (1|Trial) + (1|ResponseId), data = df_ID2C2,
+family = binomial(link = "logit"))
+summary(modsub_2)
+round(sort(tapply(df_full$acc, df_full[,"task"], mean)),2)
+round(sort(tapply(df_full$acc, df_full[,"task"], sd)),2)
+round(tapply(df_full$acc, df_full[,"task"], mean),2)
+round(tapply(df_full$acc, df_full[,"task"], sd),2)
+mean(dfaccS2$acc,na.rm =T)
+sd(dfaccS2$acc,na.rm =T)
+tapply(df_full$acc, df_full[,"task"], mean)
+sort(tapply(df_full$acc, df_full[,"task"], mean))
+round(sort(tapply(df_full$acc, df_full[,"task"], mean)),2)
+tapply(df_full$acc, df_full[,"task"], mean)
+round(tapply(df_full$acc, df_full[,"task"], mean),2)
+round(sort(tapply(df_full$acc, df_full[,"task"], mean)),2)
+round(sort(tapply(df_full$acc, df_full[,"task"], sd)),2)
+round(tapply(df_full$acc, df_full[,"task"], mean),2)
+round(tapply(df_full$acc, df_full[,"task"], sd),2)
+mean(dfaccS2$acc,na.rm =T)
+sd(dfaccS2$acc,na.rm =T)
+df_ICS <- df_full %>%
+mutate(task = factor(task, levels = c("ID1","ID2","ID3","C1","C2","S1"))) %>%
+mutate(taskGroup = factor(ifelse(task %in% c("ID1","ID2","ID3"), "ID",
+ifelse(task %in%c("C1","C2"),"Comp","Summ"))))
+round(tapply(df_ICS$acc, df_ICS[,"taskGroup"], mean),2)
+round(tapply(df_ICS$acc, df_ICS[,"taskGroup"], sd),2)
+df_ID1C1 <- df_full %>%
+filter(task %in% c("ID1","C1"))
+modsub_1 <- glmer(acc ~ task * Frame_Quantity + (1|Trial) + (1|ResponseId), data = df_ID1C1,
+family = binomial(link = "logit"))
+summary(modsub_1)
+# exp(fixef(modsub_1))[4]
+# confint.merMod(modsub_1)
+df_ID2C2 <- df_full %>%
+filter(task %in% c("ID2","C2"))
+modsub_2 <- glmer(acc ~ task * Frame_Quantity + (1|Trial) + (1|ResponseId), data = df_ID2C2,
+family = binomial(link = "logit"))
+summary(modsub_2)
+# confint.merMod(modsub_2)
+# exp(c(0.001938348,  0.008744656))
+se <- sqrt(diag(vcov(modfull_Id1)))
+# table of estimates with 95% CI
+(tab <- cbind(Est = fixef(modfull_Id1), LL = fixef(modfull_Id1) - 1.96 * se, UL = fixef(modfull_Id1) + 1.96 * se))
+exp(tab)
+load(file = "clean_data/exp2main.RData")
+# Get a vector of data frame names that contain "Exp" in their names
+exp_df_names <- grep(pattern = "Exp2", ls(.GlobalEnv), value = TRUE)
+# Define a function to select columns from a data frame
+select_cols <- function(df) {
+unique(df %>% select(ResponseId,Gender))
+}
+# Use lapply to apply the select_cols function to each data frame
+selected_cols <- lapply(exp_df_names, function(df_name) {
+df <- get(df_name)
+select_cols(df)
+})
+# Combine the data frames into a single data frame
+combined_df <- unique(bind_rows(selected_cols) %>% select(ResponseId,Gender))
+# Group by Gender and summarize to get the sum of n by Gender
+sex_df <- data.frame(combined_df %>%
+group_by(Gender) %>%
+count())
+sex_df
+# pdf(file = "figures/Experiment2_Scale.pdf", width = 5, height=10) #saving figure
+grid.arrange(id1_plot_scale,id2_plot_scale, id3_plot_scale, compare1_plot_scale,  compare2_plot_scale, summ1_plot_scale, summ2_plot_scale,ncol = 1)
+# pdf(file = "figures/Experiment2_Time.pdf", width = 5, height=10) #saving figure
+grid.arrange(id1_plot_time,id2_plot_time, id3_plot_time, compare1_plot_time,  compare2_plot_time, summ1_plot_time, summ2_plot_time,ncol = 1)
+listOlist_dats
+View(listOlist_dats)
+listOlist_dats[[1]][[1]][[1]]
+listOlist_dats[[1]][[1]][[1]][[1]]
+listOlist_dats[[1]][[1]][[5]]
+listOlist_dats[[1]][[5]][[1]]
+listOlist_dats[[1]][[5]][[3]]
+listOlist_dats[[1]][[6]][[3]]
+listOlist_dats[[3]][[6]][[3]]
+knitr::opts_chunk$set(fig.align = "left",
+echo = FALSE,
+message = FALSE,
+warning = FALSE
+)
+source(file = "Functions.R")
+require(splitstackshape)  # splitting columns
+library(tidyverse) # Data wrangling/pipe (%>%)
+library(lme4)
+library(lmerTest)
+library(gridExtra)
+library(tidybayes)
+library(forcats)
+load(file = "clean_data/main.RData")
+rm(list = ls())
