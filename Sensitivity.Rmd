@@ -1,0 +1,1304 @@
+---
+title: "Analysis Revision - Sensitivity"
+author: "Helia Hosseinpour, Laura E. Matzen, Kristin M. Divis, [Spencer C. Castro](spencer.castro.com), [and Lace Padilla](http://space.ucmerced.edu/LacePadilla.html)"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  pdf_document:
+    toc: yes
+    keep_tex: yes
+    pandoc_args: --listings
+    includes:
+      in_header: preamble.tex
+  html_document:
+    code_folding: hide
+    highlight: pygments
+    theme: spacelab
+    toc: yes
+    toc_float: true
+    fig_width: 6 
+    fig_height: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "left",
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+
+source(file = "Functions.R")
+require(splitstackshape)  # splitting columns 
+library(tidyverse) # Data wrangling/pipe (%>%)
+library(lme4)
+library(lmerTest)
+library(gridExtra)
+library(tidybayes)
+library(forcats)
+load(file = "clean_data/main.RData")
+```
+
+# Experiment 1
+
+Theme used for every small multiple created
+
+```{r Theme: Specifying how small multiple visualizations look}
+theme_SmallMultiple<-
+    ggplot2::theme_bw() +
+    ggplot2:: theme_light()+ 
+    ggplot2::theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),
+                 text = element_text(size = 20), axis.text.x=element_text(angle=80, 
+                 hjust=1,  color = "black"), axis.text.y =
+                 element_text(color = "black"), strip.background =
+                 element_blank(),strip.text.x = element_blank(), panel.border =     
+                 element_rect(colour = "gray", fill=NA, size=2))
+```
+
+## Identify
+
+### Identify 1 Accuracy Analysis
+
+Four participants were removed due to writing a four-letter word that started with g other than "grid" in the attention check.
+
+```{r acc compare}
+dfaccID1 <- as_tibble(Exp1_ID1_df %>% 
+   dplyr::filter(ResponseId %ni% c("R_dc1qAAvQQo7m133",
+                 "R_2QVBIR0ja3iFuUL",
+                 "R_3R8I8VWOK8N3ZIf",
+                 "R_cNLo7w2zn57UVhL")) %>%
+   dplyr::mutate(acc = ifelse(Individual_FramesNum == Correct_FramesNum, 1,0)) %>% 
+   dplyr::mutate(across(c("Trial", "Frame_Quantity"),.fns = as.numeric),
+         acc = as.numeric(as.character(acc))) %>% 
+   dplyr::mutate(ResponseId = factor(ResponseId)) %>% 
+   dplyr::select(ResponseId,Trial,Frame_Quantity,acc))%>% 
+   dplyr::mutate(task = "ID1")
+
+mod1 <- glmer(acc ~ Frame_Quantity + (1|Trial)+(1|ResponseId), data = dfaccID1, family = binomial(link = "logit"))
+summary(mod1)
+#NEW
+#                 Estimate Std. Error z value Pr(>|z|)    
+# (Intercept)     3.129925   0.237533   13.18   <2e-16 ***
+# Frame_Quantity -0.026880   0.002042  -13.16   <2e-16 ***
+
+#OLD
+#                 Estimate Std. Error z value Pr(>|z|)    
+# (Intercept)     2.978545   0.216501   13.76   <2e-16 ***
+# Frame_Quantity -0.025610   0.001765  -14.51   <2e-16 ***
+```
+
+```{r plot1}
+dfsum <- summarySEwithin(data = dfaccID1, measurevar = "acc",withinvars = c("Frame_Quantity"), idvar = "ResponseId") %>% 
+  arrange(Frame_Quantity) %>% 
+  mutate(Frame_Quantity = as.numeric(as.character(Frame_Quantity)))
+
+maxplot <- ggplot(dfsum, aes(x=Frame_Quantity, y=acc))+ #setting up x and y axes
+    stat_eye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), show_interval = FALSE)+
+    ylab("Accuracy")+ #naming y-axis
+    xlab("Number of Frames")+ #naming x-axis
+    ggtitle("Experiment 1 (Identify Max)")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+    scale_x_continuous(breaks=seq(2, 70, 4))+
+    scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+    geom_smooth(method = lm,se=F)+
+    theme(plot.title = element_text(size = 12, hjust = 0.5),
+    axis.text.x = element_text(angle = 90, hjust = 1, size=7, color =  "black"))
+maxplot
+
+```
+
+### Identify 2 Accuracy Analysis
+
+Five participants were removed due to writing a four-letter word that started with g other than "grid" in the attention check.
+
+```{r MEANRANGE ACC}
+dfaccID2 <- as_tibble(Exp1_ID2_df %>% 
+   dplyr::filter(ResponseId %ni% c("R_1r9BuWVyRnc3csX",
+                                  "R_27NFR4bp1E924Uh",
+                                  "R_1CI5Hw5N4mNzxqU",
+                                  "R_2ZWAu0i7xJwq1M5",
+                                  "R_BLp0vDkvzXeo81z")) %>% 
+   dplyr::mutate(acc = ifelse(Individual_FramesNum == Correct_FramesNum, 1,0)) %>% 
+   dplyr::mutate(across(c("Trial", "Frame_Quantity"),.fns = as.numeric),
+         acc = as.numeric(as.character(acc))) %>% 
+   dplyr::mutate(ResponseId = factor(ResponseId)) %>% 
+   dplyr::select(ResponseId,Trial,Frame_Quantity,acc))%>% 
+   dplyr::mutate(task = "ID2")
+
+mod_meanrange <- glmer(acc ~ Frame_Quantity +  (1|Trial)+(1|ResponseId), data = dfaccID2, family = binomial(link = "logit"))
+summary(mod_meanrange)
+```
+
+```{r plot2}
+dfsum <- summarySEwithin(data = dfaccID2, measurevar = "acc",withinvars = c("Frame_Quantity"), idvar = "ResponseId") %>% 
+  arrange(Frame_Quantity) %>% 
+  mutate(Frame_Quantity = as.numeric(as.character(Frame_Quantity)))
+
+meanrangeplot <- ggplot(dfsum, aes(x=Frame_Quantity, y=acc))+ #setting up x and y axes
+    stat_eye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), show_interval = FALSE)+
+    ylab("Accuracy")+ #naming y-axis
+    xlab("Number of Frames")+ #naming x-axis
+    ggtitle("Experiment 1 (Identify 2)")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+    scale_x_continuous(breaks=seq(2, 70, 4))+
+    scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+    geom_smooth(method = lm,se=F, color =  "black")+
+    theme(plot.title = element_text(size = 12, hjust = 0.5),
+    axis.text.x = element_text(angle = 90, hjust = 1, size=7, color =  "black"))
+meanrangeplot
+```
+
+#### Identify 2 Secondary Analysis (MeanRange vs Range vs Mean)
+
+Identify 2 Mean Accuracy
+
+```{r MEAN ACC}
+load(file = "clean_data/ID2Analysis.RData")
+
+dfacc <- as_tibble(dfjoinedMean %>% 
+  dplyr::mutate(acc = ifelse(Individual_FramesNum == Correct_FramesNum, 1,0)) %>% 
+     dplyr::filter(ResponseId %ni% c("R_1r9BuWVyRnc3csX",
+                                  "R_27NFR4bp1E924Uh",
+                                  "R_1CI5Hw5N4mNzxqU",
+                                  "R_2ZWAu0i7xJwq1M5",
+                                  "R_BLp0vDkvzXeo81z")) %>% 
+   dplyr::mutate(across(c("Trial", "Frame_Quantity"),.fns = as.numeric),
+         acc = as.numeric(as.character(acc))) %>% 
+   dplyr::mutate(ResponseId = factor(ResponseId)) %>% 
+  dplyr::select(ResponseId,Trial,Frame_Quantity,acc))
+
+mod_mean <- glmer(acc ~ Frame_Quantity +  (1|Trial)+(1|ResponseId), data = dfacc, family = binomial(link = "logit"))
+summary(mod_mean)
+```
+
+```{r Plot 2.1}
+dfsum <- summarySEwithin(data = dfacc, measurevar = "acc",withinvars = c("Frame_Quantity"), idvar = "ResponseId") %>% 
+  arrange(Frame_Quantity) %>% 
+  mutate(Frame_Quantity = as.numeric(as.character(Frame_Quantity)))
+
+meanplot <- ggplot(dfsum, aes(x=Frame_Quantity, y=acc))+ #setting up x and y axes
+    stat_eye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), show_interval = FALSE)+
+    ylab("Accuracy")+ #naming y-axis
+    xlab("Number of Frames")+ #naming x-axis
+    ggtitle("Experiment 1 (Mean)")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+    scale_x_continuous(breaks=seq(2, 70, 4))+
+    scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+    geom_smooth(method = lm,se=F, color =  "black") +
+    theme(plot.title = element_text(size = 12, hjust = 0.5),
+    axis.text.x = element_text(angle = 90, hjust = 1, size=7, color =  "black"))
+
+```
+
+Identify 2 Range Accuracy
+
+```{r RANGE ACC}
+dfacc <- as_tibble(dfjoinedRange %>% 
+  dplyr::mutate(acc = ifelse(Individual_FramesNum == Correct_FramesNum, 1,0)) %>% 
+  dplyr::filter(ResponseId %ni% c("R_1r9BuWVyRnc3csX",
+                                  "R_27NFR4bp1E924Uh",
+                                  "R_1CI5Hw5N4mNzxqU",
+                                  "R_2ZWAu0i7xJwq1M5",
+                                  "R_BLp0vDkvzXeo81z")) %>%
+   dplyr::mutate(across(c("Trial", "Frame_Quantity"),.fns = as.numeric),
+         acc = as.numeric(as.character(acc))) %>% 
+   dplyr::mutate(ResponseId = factor(ResponseId)) %>% 
+  dplyr::select(ResponseId,Trial,Frame_Quantity,acc))
+
+mod_range <- glmer(acc ~ Frame_Quantity +  (1|Trial)+(1|ResponseId), data = dfacc, family = binomial(link = "logit"))
+summary(mod_range)
+```
+
+```{r plot 2.2}
+dfsum <- summarySEwithin(data = dfacc, measurevar = "acc",withinvars = c("Frame_Quantity"), idvar = "ResponseId") %>% 
+  arrange(Frame_Quantity) %>% 
+  mutate(Frame_Quantity = as.numeric(as.character(Frame_Quantity)))
+
+rangeplot <- ggplot(dfsum, aes(x=Frame_Quantity, y=acc))+ #setting up x and y axes
+    stat_eye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), show_interval = FALSE)+
+    ylab("Accuracy")+ #naming y-axis
+    xlab("Number of Frames")+ #naming x-axis
+    ggtitle("Experiment 1 (Range)")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+    scale_x_continuous(breaks=seq(2, 70, 4))+
+    scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+    geom_smooth(method = lm,se=F, color =  "black")+
+    theme(plot.title = element_text(size = 12, hjust = 0.5),
+    axis.text.x = element_text(angle = 90, hjust = 1, size=7, color =  "black"))
+
+```
+
+Plots side-by-side
+
+```{r plots 2_2.1_2.2}
+#pdf(file = "figures/ID2_three.pdf", width = 8, height= 5)
+grid.arrange( meanrangeplot, meanplot, rangeplot, ncol = 3)
+#dev.off()
+```
+
+### Identify 3 Accuracy Analysis
+
+Three participants were removed due to writing a four-letter word that started with g other than "grid" in the attention check.
+
+```{r}
+dfaccID3 <- as_tibble(Exp1_ID3_df %>% 
+  dplyr::filter(ResponseId %ni% c("R_x4PGi1OrtXIT9VD",
+                                   "R_cwnap7vKugRKV9f",
+                                   "R_2Yy4VtavmtMv0vA")) %>%
+  dplyr::mutate(Correct_Frames = ifelse(geom_hline < Correct_FramesValue, 1,0)) %>%
+  dplyr::mutate(Correct_Frames = ifelse(Frame_Quantity == "18" & Trial == "12" & Individual_FramesNum == "14", 0,Correct_Frames)) %>% 
+  dplyr::mutate(acc = ifelse(Correct_Frames == ResponseCode,1,0)) %>%
+  dplyr::group_by(ResponseId,Frame_Quantity,Trial) %>% 
+  dplyr::summarise(acc = ifelse(all(acc == 1),1,0)) %>% 
+  dplyr::mutate(Frame_Quantity = as.numeric(Frame_Quantity),
+                Trial = as.numeric(Trial),
+         acc = as.numeric(as.character(acc)))) %>% 
+  dplyr::mutate(task = "ID3")
+
+mod1 <- glmer(acc ~ Frame_Quantity +  (1|Trial)+(1|ResponseId), data = dfaccID3, family = binomial(link = "logit"))
+summary(mod1)
+```
+
+```{r plot 3}
+dfsum <- summarySEwithin(data = dfaccID3, measurevar = "acc",withinvars = c("Frame_Quantity"), idvar = "ResponseId") %>% 
+  arrange(Frame_Quantity) %>% 
+  mutate(Frame_Quantity = as.numeric(as.character(Frame_Quantity)))
+
+Id3plot <- ggplot(dfsum, aes(x=Frame_Quantity, y=acc))+ #setting up x and y axes
+    stat_eye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), show_interval = FALSE)+
+    ylab("Accuracy")+ #naming y-axis
+    xlab("Number of Frames")+ #naming x-axis
+    ggtitle("Experiment 1 (Over Hline)")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+    scale_x_continuous(breaks=seq(2, 70, 4))+
+    scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+    geom_smooth(method = lm,se=F)
+Id3plot
+```
+
+## Compare
+
+### Compare 1 Accuracy Analysis
+
+One participant was removed due to writing a four-letter word that started with g other than "grid" in the attention check.
+
+```{r compare1 acc}
+dfaccC1 <- as_tibble(Exp1_C1_df %>% 
+                         dplyr::filter(ResponseId %ni% c("R_20VsPuF4cqKupYI")) %>% 
+  dplyr::mutate(acc = ifelse(Individual_FramesNum == Correct_FramesNum, 1,0)) %>% 
+   dplyr::mutate(across(c("Trial", "Frame_Quantity"),.fns = as.numeric),
+         acc = as.numeric(as.character(acc))) %>% 
+   dplyr::mutate(ResponseId = factor(ResponseId)) %>% 
+  dplyr::select(ResponseId,Trial,Frame_Quantity,acc))%>% 
+  dplyr::mutate(task = "C1")
+
+mod1 <- glmer(acc ~ Frame_Quantity +  (1|Trial)+(1|ResponseId), data = dfaccC1, family = binomial(link = "logit"))
+summary(mod1)
+```
+
+```{r plot 4}
+dfsum <- summarySEwithin(data = dfaccC1, measurevar = "acc",withinvars = c("Frame_Quantity"), idvar = "ResponseId") %>% 
+  arrange(Frame_Quantity) %>% 
+  mutate(Frame_Quantity = as.numeric(as.character(Frame_Quantity)))
+
+  compare1_maxplot <- ggplot(dfsum, aes(x=Frame_Quantity, y=acc))+ #setting up x and y axes
+    stat_eye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), show_interval = FALSE)+
+    ylab("Accuracy")+ #naming y-axis
+    xlab("Number of Frames")+ #naming x-axis
+    ggtitle("Exp 1 (Compare 1 Max)")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+    scale_x_continuous(breaks=seq(2, 70, 4))+
+    scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+    geom_smooth(method = lm,se=F)
+  compare1_maxplot
+```
+
+### Compare 2 Accuracy Analysis
+
+One participant was removed due to writing a four-letter word that started with g other than "grid" in the attention check.
+
+```{r compare2 acc}
+dfaccC2 <- as_tibble(Exp1_C2_df %>% 
+                 dplyr::filter(ResponseId %ni% c("R_2zBXYCpGBqaiJXF")) %>%      
+  dplyr::mutate(acc = ifelse(Individual_FramesNum == Correct_FramesNum, 1,0)) %>% 
+   dplyr::mutate(across(c("Trial", "Frame_Quantity"),.fns = as.numeric),
+         acc = as.numeric(as.character(acc))) %>% 
+   dplyr::mutate(ResponseId = factor(ResponseId)) %>% 
+  dplyr::select(ResponseId,Trial,Frame_Quantity,acc))%>% 
+  dplyr::mutate(task = "C2")
+
+mod_meanrange <- glmer(acc ~ Frame_Quantity +  (1|Trial)+(1|ResponseId), data = dfaccC2, family = binomial(link = "logit"))
+summary(mod_meanrange)
+```
+
+```{r plot 5}
+dfsum <- summarySEwithin(data = dfaccC2, measurevar = "acc",withinvars = c("Frame_Quantity"), idvar = "ResponseId") %>% 
+  arrange(Frame_Quantity) %>% 
+  mutate(Frame_Quantity = as.numeric(as.character(Frame_Quantity)))
+
+compare2_meanrange <- ggplot(dfsum, aes(x=Frame_Quantity, y=acc))+ #setting up x and y axes
+    stat_eye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), show_interval = FALSE)+
+    ylab("Accuracy")+ #naming y-axis
+    xlab("Number of Frames")+ #naming x-axis
+    ggtitle("Exp 1 (Compare 2 MeanRange)")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+    scale_x_continuous(breaks=seq(2, 70, 4))+
+    scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+    geom_smooth(method = lm,se=F)+
+    theme(plot.title = element_text(size = 12, hjust = 0.5),
+    axis.text.x = element_text(angle = 90, hjust = 1, size=7, color =  "black"))
+compare2_meanrange
+```
+
+#### Compare 2 Secondary Analysis (MeanRange vs Range vs Mean)
+
+Compare 2 Mean Accuracy
+
+```{r}
+load(file = "clean_data/C2Analysis.RData")
+# MEAN -------------------------------
+dfacc <- as_tibble(dfjoinedMean %>%
+  dplyr::mutate(acc = ifelse(Individual_FramesNum == Correct_FramesNum, 1,0)) %>%
+    dplyr::filter(ResponseId %ni% c("R_2zBXYCpGBqaiJXF")) %>%
+   dplyr::mutate(across(c("Trial", "Frame_Quantity"),.fns = as.numeric),
+         acc = as.numeric(as.character(acc))) %>%
+   dplyr::mutate(ResponseId = factor(ResponseId)) %>%
+  dplyr::select(ResponseId,Trial,Frame_Quantity,acc))
+
+dfsum <- summarySEwithin(data = dfacc, measurevar = "acc",withinvars = c("Frame_Quantity"), idvar = "ResponseId") %>%
+  arrange(Frame_Quantity) %>%
+  mutate(Frame_Quantity = as.numeric(as.character(Frame_Quantity)))
+
+mod_mean <- glmer(acc ~ Frame_Quantity +  (1|Trial)+(1|ResponseId), data = dfacc, family = binomial(link = "logit"))
+summary(mod_mean)
+
+compare2_mean <- ggplot(dfsum, aes(x=Frame_Quantity, y=acc))+ #setting up x and y axes
+    stat_eye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), show_interval = FALSE)+
+    ylab("Accuracy")+ #naming y-axis
+    xlab("Number of Frames")+ #naming x-axis
+    ggtitle("Exp 1 (Compare 2 Mean)")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+    scale_x_continuous(breaks=seq(2, 70, 4))+
+    scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+    geom_smooth(method = lm,se=F)+ 
+    theme(plot.title = element_text(size = 12, hjust = 0.5),
+    axis.text.x = element_text(angle = 90, hjust = 1, size=7, color =  "black"))
+```
+
+Compare 2 Range Accuracy
+
+```{r}
+# RANGE -------------------------------
+dfacc <- as_tibble(dfjoinedRange %>%
+  dplyr::mutate(acc = ifelse(Individual_FramesNum == Correct_FramesNum, 1,0)) %>%
+   dplyr::mutate(across(c("Trial", "Frame_Quantity"),.fns = as.numeric),
+         acc = as.numeric(as.character(acc))) %>%
+   dplyr::mutate(ResponseId = factor(ResponseId)) %>%
+  dplyr::select(ResponseId,Trial,Frame_Quantity,acc))
+
+dfsum <- summarySEwithin(data = dfacc, measurevar = "acc",withinvars = c("Frame_Quantity"), idvar = "ResponseId") %>%
+  arrange(Frame_Quantity) %>%
+  mutate(Frame_Quantity = as.numeric(as.character(Frame_Quantity)))
+
+mod_range <- glmer(acc ~ Frame_Quantity +  (1|Trial)+(1|ResponseId), data = dfacc, family = binomial(link = "logit"))
+summary(mod_range)
+
+compare2_range <- ggplot(dfsum, aes(x=Frame_Quantity, y=acc))+ #setting up x and y axes
+    stat_eye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), show_interval = FALSE)+
+    ylab("Accuracy")+ #naming y-axis
+    xlab("Number of Frames")+ #naming x-axis
+    ggtitle("Exp 1 (Compare 2 Range)")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+    scale_x_continuous(breaks=seq(2, 70, 4))+
+    scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+    geom_smooth(method = lm,se=F)+
+    theme(plot.title = element_text(size = 12, hjust = 0.5),
+    axis.text.x = element_text(angle = 90, hjust = 1, size=7, color =  "black"))
+```
+
+Plots side-by-side
+
+```{r plots so far4, out.width="100%"}
+# meanrangeplot, meanplot, rangeplot,Id3plot,
+
+# pdf(file = "figures/Comp2_three.pdf", width = 8, height=5) #saving figure
+grid.arrange(compare2_meanrange,compare2_mean,compare2_range,  ncol = 3)
+ # dev.off()
+```
+
+## Summarize
+
+### Summarize 1 Accuracy Analysis
+
+Three participants were removed due to writing a four-letter word that started with g other than "grid" in the attention check.
+
+```{r}
+dfaccS1 <- as_tibble(Exp1_S1_df %>%
+  dplyr::filter(ResponseId %ni% c("R_1mVPKEmiK9hWDq2",
+                                  "R_2sX7PJ5Cje0hVFn",
+                                  "R_xtqJDFq6MxDMmCB")) %>%              
+  dplyr::mutate(acc = ifelse(ResponseCode == Correct_FramesNum, 1,0)) %>%
+   dplyr::mutate(across(c("Trial", "Frame_Quantity"),.fns = as.numeric),
+         acc = as.numeric(as.character(acc))) %>% 
+   dplyr::mutate(ResponseId = factor(ResponseId)) %>% 
+  dplyr::select(ResponseId,Trial,Frame_Quantity,acc))%>% 
+  dplyr::mutate(task = "S1")
+
+modsum1 <- glmer(acc ~ Frame_Quantity +  (1|Trial)+(1|ResponseId), data = dfaccS1, family = binomial(link = "logit"))
+summary(modsum1)
+```
+
+```{r plot 6}
+dfsum <- summarySEwithin(data = dfaccS1, measurevar = "acc",withinvars = c("Frame_Quantity"), idvar = "ResponseId") %>% 
+  arrange(Frame_Quantity) %>% 
+  mutate(Frame_Quantity = as.numeric(as.character(Frame_Quantity)))
+
+summ1_plot <- ggplot(dfsum, aes(x=Frame_Quantity, y=acc))+ #setting up x and y axes
+    stat_eye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), show_interval = FALSE)+
+    ylab("Accuracy")+ #naming y-axis
+    xlab("Number of Frames")+ #naming x-axis
+    ggtitle("Experiment 1 (Summary 1)")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+    scale_x_continuous(breaks=seq(2, 70, 4))+
+    scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+    geom_smooth(method = lm,se=F)
+summ1_plot
+```
+
+### Summarize 2 Error Analysis
+
+Seven participants were removed due to either writing a four-letter word that started with g other than "grid" in the attention check or responding with values outside of the maximum power value possible.
+
+```{r, out.width="100%"}
+dfaccS2 <- as_tibble(Exp1_S2_df %>% 
+  dplyr::filter(ResponseId %ni% c("R_3q87De0UcHnqWcD",
+                                  "R_PU7fm5BV3Wkjvqh",
+                                  "R_ZIvrMf4V7ac7N97",
+                                  "R_1JJf0yMHhxY1vPi",
+                                  "R_2X0t3WmKsvdeDuO",
+                                  "R_3m9uN5B0pCg6A84", #Had  trials outside of MaxRange
+                                  "R_erqfEjsMzi4ChQ"  #Had trials outside of MaxRange
+                                  )) %>%
+  dplyr::mutate(error = abs(as.numeric(Response) - Correct_Mean)) %>%
+    dplyr::mutate(error_perc = error/MaxRange) %>% 
+    dplyr::mutate(acc = 1 - (error/MaxRange)) %>% 
+    dplyr::filter(acc > 0) %>%
+   dplyr::mutate(across(c("Trial", "Frame_Quantity"),.fns = as.numeric),
+         acc = as.numeric(as.character(acc))) %>% 
+   dplyr::mutate(ResponseId = factor(ResponseId)) %>% 
+  dplyr::select(ResponseId,Trial,Frame_Quantity,error_perc,acc)) %>% 
+  dplyr::mutate(task = "S2")
+
+mean(dfaccS2$acc)
+sd(dfaccS2$acc) 
+
+modsum2 <- lmer(acc ~ Frame_Quantity +  (1|Trial)+(1|ResponseId), data = dfaccS2)
+summary(modsum2)
+
+```
+
+```{r, out.width="100%"}
+dfsum <- summarySEwithin(data = dfaccS2, measurevar = "acc",withinvars = c("Frame_Quantity"), idvar = "ResponseId") %>% 
+  arrange(Frame_Quantity) %>% 
+  mutate(Frame_Quantity = as.numeric(as.character(Frame_Quantity)))
+
+  summ2_plot <- ggplot(dfsum, aes(x=Frame_Quantity, y=acc))+ #setting up x and y axes
+    stat_eye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), show_interval = FALSE)+
+    ylab("Proportional Accuracy (1 - Error)")+ #naming y-axis
+    xlab("Number of Frames")+ #naming x-axis
+    ggtitle("Experiment 1 (Summary 2)")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+    scale_x_continuous(breaks=seq(2, 70, 4))+
+    scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+    geom_smooth(method = lm,se=F)
+summ2_plot
+
+
+```
+
+# Experiment 1 - 6 Combined Tasks of Accuracy
+
+Combine all of the main accuracy datasets
+
+```{r}
+df_full <- bind_rows(list(
+               "ID1" = dfaccID1,
+               "ID2" = dfaccID2,
+               "ID3" = dfaccID3,
+               "C1"=dfaccC1,
+               "C2"=dfaccC2,
+               "S1"=dfaccS1), .id = 'source') %>% 
+  dplyr::mutate(task = factor(task, levels = c("ID1","ID2","ID3","C1","C2","S1")))
+```
+
+## Changing the referent
+
+### Identify 1
+
+(Spencer can you update the FullModels.RData with these interation models?)
+
+```{r}
+# load(file = "analysis/FullModels.RData")
+# ID1 referent -------------
+df_fullId1 <- df_full %>%
+  dplyr::mutate(task = factor(task, levels = c("ID1","ID2","ID3","C1","C2","S1")))
+modfull_Id1 <- glmer(acc ~ task * Frame_Quantity + (1|Trial) + (1|ResponseId), data = df_fullId1,
+                 family = binomial(link = "logit"))
+summary(modfull_Id1)
+```
+
+### Identify 2
+
+```{r}
+# ID2 referent -------------
+ df_fullId2 <- df_full %>%
+   dplyr::mutate(task = fct_relevel(task, "ID2", "ID1","ID3","C1","C2","S1"))
+ modfull_Id2 <- glmer(acc ~ task * Frame_Quantity + (1|Trial) + (1|ResponseId), data = df_fullId2,
+                  family = binomial(link = "logit"))
+summary(modfull_Id2)
+```
+
+### Identify 3
+
+```{r}
+# ID3 referent -------------
+df_fullId3 <- df_full %>%
+   dplyr::mutate(task = fct_relevel(task, "ID3", "ID2", "ID1","C1","C2","S1"))
+ modfull_Id3 <- glmer(acc ~ task * Frame_Quantity + (1|Trial) + (1|ResponseId), data = df_fullId3,
+                  family = binomial(link = "logit"))
+summary(modfull_Id3)
+```
+
+### Compare 1
+
+```{r}
+# Comp1 referent ---------
+ df_fullComp1 <- df_full %>%
+   mutate(task = fct_relevel(task, "C1","ID1","ID2","ID3","C2","S1"))
+ modfull_Comp1 <- glmer(acc ~ task * Frame_Quantity + (1|Trial) + (1|ResponseId), data = df_fullComp1,
+                  family = binomial(link = "logit"))
+summary(modfull_Comp1)
+```
+
+### Compare 2
+
+```{r}
+# Comp2 referent ---------
+ df_fullComp2 <- df_full %>%
+   mutate(task = fct_relevel(task, "C2", "C1","ID1","ID2","ID3","S1"))
+
+ modfull_Comp2 <- glmer(acc ~ task * Frame_Quantity + (1|Trial) + (1|ResponseId), data = df_fullComp2,
+                  family = binomial(link = "logit"))
+summary(modfull_Comp2)
+
+```
+
+### Summarize 1
+
+```{r}
+# Summ1 referent ---------
+ df_fullSumm1 <- df_full %>%
+   mutate(task = fct_relevel(task, "S1","C1","ID1","ID2","ID3","C2"))
+ modfull_Summ1 <- glmer(acc ~ task * Frame_Quantity + (1|Trial) + (1|ResponseId), data = df_fullSumm1,
+                  family = binomial(link = "logit"))
+summary(modfull_Summ1)
+
+ # save(modfull_Id1, modfull_Id2,  modfull_Id3, modfull_Comp1,modfull_Comp2,modfull_Summ1, file = "analysis/FullModels.RData")
+
+```
+
+## Plot of 7 tasks
+
+```{r}
+# PANE 1 --------------
+dfpane1 <- df_full %>% 
+  dplyr::filter(task %in% c("ID1","C1"))%>% 
+  dplyr::mutate(acc = as.numeric(as.character(acc)))
+
+dfsum <- as_tibble(summarySEwithin(data = dfpane1, measurevar = "acc",withinvars = c("Frame_Quantity"),betweenvars = c("task"), idvar = "ResponseId") %>% 
+  dplyr::arrange(Frame_Quantity) %>% 
+  dplyr::mutate(Frame_Quantity = as.numeric(as.character(Frame_Quantity)))) %>%
+  droplevels()
+
+compare1_ID1plot <- ggplot(dfsum, aes(x=Frame_Quantity, y=acc, color = task))+ #setting up x and y axes
+    stat_eye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se, fill = task), show_interval = FALSE)+
+    ylab("Accuracy")+ #naming y-axis
+    xlab("Number of Frames")+ #naming x-axis
+   labs(y = "Accuracy", x ="Number of Frames", title = "Identify 1 vs Compare 1", 
+         fill = "Task", color = "Task")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+    scale_x_continuous(breaks=seq(2, 70, 4))+
+    scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+    geom_smooth(method = lm,se=F, aes(color = task)) +
+  scale_color_manual(values =c("grey60","blue")) +
+  scale_fill_manual(values =c("grey60","blue")) +
+  theme(strip.text.x = element_blank(),
+      strip.background = element_rect(colour="white", fill="white"),
+      legend.position=c(.45,.15),
+      plot.title = element_text(size = 12, hjust = 0.5),
+      axis.text.x = element_text(angle = 90, hjust = 1, size=7, color =  "black")
+      )
+
+# PANE 2 --------------
+dfpane2 <- df_full %>% 
+  dplyr::filter(task %in% c("ID2","C2")) %>% 
+  dplyr::mutate(acc = as.numeric(as.character(acc)))
+
+dfsum <- summarySEwithin(data = dfpane2, measurevar = "acc",withinvars = c("Frame_Quantity"),betweenvars = "task", idvar = "ResponseId") %>% 
+  dplyr::arrange(Frame_Quantity) %>% 
+  dplyr::mutate(Frame_Quantity = as.numeric(as.character(Frame_Quantity)))
+
+compare2_ID2plot <- ggplot(dfsum, aes(x=Frame_Quantity, y=acc, group = task))+ #setting up x and y axes
+    stat_eye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se, fill = task), show_interval = FALSE)+
+    labs(y = "Accuracy", x ="Number of Frames", title = "Identify 2 vs Compare 2", 
+         fill = "Task", color = "Task")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+    scale_x_continuous(breaks=seq(2, 70, 4))+
+    scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+    geom_smooth(method = lm,se=F, aes(color = task)) +
+  scale_color_manual(values =c("grey60","blue")) +
+  scale_fill_manual(values =c("grey60","blue")) +
+  theme(strip.text.x = element_blank(),
+      strip.background = element_rect(colour="white", fill="white"),
+      legend.position=c(.45,.15),
+      plot.title = element_text(size = 12, hjust = 0.5),
+      axis.text.x = element_text(angle = 90, hjust = 1, size=7, color =  "black")
+      )
+
+# PANE 3 --------------
+Id3pane <- Id3plot + labs(title = "Identify 3") +
+  scale_color_manual(values ="grey60") +
+  scale_fill_manual(values ="grey60") +
+  theme(plot.title = element_text(size = 12, hjust = 0.5),
+         axis.text.x = element_text(angle = 90, hjust = 1, size=7, color =  "black"))
+
+# PANE 4 --------------
+summ1pane <- summ1_plot +labs(title = "Summary 1") +
+  scale_color_manual(values ="grey60") +
+  scale_fill_manual(values ="grey60") +
+  theme(plot.title = element_text(size = 12, hjust = 0.5),
+         axis.text.x = element_text(angle = 90, hjust = 1, size=7, color =  "black"))
+
+# PANE 5 ---------------
+summ2pane <- summ2_plot +labs(title = "Summary 2") +
+  scale_color_manual(values ="grey60") +
+  scale_fill_manual(values ="grey60") +
+  theme(plot.title = element_text(size = 12, hjust = 0.5),
+         axis.text.x = element_text(angle = 90, hjust = 1, size=7, color = "black"))
+
+
+```
+
+#### Final Plot (ID1 & IDComp1 in pane 1, ID2 & Comp2 in pane 2, ID3 in pane 3, Summ1 in pane 4)
+
+```{r, out.width="100%"}
+# pdf(file = "figures/Experiment1_Full_Revised.pdf", width = 12.5, height=5) #saving figure
+grid.arrange(compare1_ID1plot,compare2_ID2plot,Id3pane,summ1pane,summ2pane, ncol = 5)
+# dev.off()
+```
+
+### Means and SDs from df_full 6 tasks
+
+```{r}
+round(sort(tapply(df_full$acc, df_full[,"task"], mean)),2)
+round(sort(tapply(df_full$acc, df_full[,"task"], sd)),2)
+round(tapply(df_full$acc, df_full[,"task"], mean),2)
+round(tapply(df_full$acc, df_full[,"task"], sd),2)
+
+mean(dfaccS2$acc,na.rm =T)
+sd(dfaccS2$acc,na.rm =T)
+```
+
+### Means and SDs from df_full groups of Identify, Compare, and Summarize
+
+```{r}
+df_ICS <- df_full %>% 
+  mutate(task = factor(task, levels = c("ID1","ID2","ID3","C1","C2","S1"))) %>% 
+  mutate(taskGroup = factor(ifelse(task %in% c("ID1","ID2","ID3"), "ID", 
+                                   ifelse(task %in%c("C1","C2"),"Comp","Summ"))))
+round(tapply(df_ICS$acc, df_ICS[,"taskGroup"], mean),2)
+round(tapply(df_ICS$acc, df_ICS[,"taskGroup"], sd),2)
+ 
+```
+
+### Planned Comparison Groups (ID1 vs Comp1) - Testing for an Interaction
+
+```{r}
+df_ID1C1 <- df_full %>% 
+  filter(task %in% c("ID1","C1"))
+
+
+modsub_1 <- glmer(acc ~ task * Frame_Quantity + (1|Trial) + (1|ResponseId), data = df_ID1C1, 
+                 family = binomial(link = "logit"))
+
+summary(modsub_1)
+
+# exp(fixef(modsub_1))[4]
+# confint.merMod(modsub_1)
+```
+
+### Planned Comparison Groups (ID2 vs Comp2) - Testing for an Interaction
+
+```{r}
+df_ID2C2 <- df_full %>% 
+  filter(task %in% c("ID2","C2"))
+modsub_2 <- glmer(acc ~ task * Frame_Quantity + (1|Trial) + (1|ResponseId), data = df_ID2C2, 
+                 family = binomial(link = "logit"))
+summary(modsub_2)
+
+# confint.merMod(modsub_2)
+# exp(c(0.001938348,  0.008744656))
+```
+
+#### Odds Ratios Confidence Intervals (\> 1 increasing, \< 1 decreasing the odds of a correct answer)
+
+```{r function}
+se <- sqrt(diag(vcov(modfull_Id1)))
+# table of estimates with 95% CI
+(tab <- cbind(Est = fixef(modfull_Id1), LL = fixef(modfull_Id1) - 1.96 * se, UL = fixef(modfull_Id1) + 1.96 * se))
+
+exp(tab)
+
+```
+
+# Experiment 2
+
+## Demographics
+
+```{r}
+load(file = "clean_data/exp2main.RData")
+# Get a vector of data frame names that contain "Exp" in their names
+exp_df_names <- grep(pattern = "Exp2", ls(.GlobalEnv), value = TRUE)
+
+# Define a function to select columns from a data frame
+select_cols <- function(df) {
+  unique(df %>% select(ResponseId,Gender))
+}
+
+# Use lapply to apply the select_cols function to each data frame
+selected_cols <- lapply(exp_df_names, function(df_name) {
+  df <- get(df_name)
+  select_cols(df)
+})
+# Combine the data frames into a single data frame
+combined_df <- unique(bind_rows(selected_cols) %>% select(ResponseId,Gender))
+
+# Group by Gender and summarize to get the sum of n by Gender
+sex_df <- data.frame(combined_df %>%
+  group_by(Gender) %>%
+  count())
+
+```
+
+There were `r sum(sex_df[,2])` participants in Experiment 2. There were `r sex_df[2,2]` participants who selected Male, `r sex_df[1,2]` participants who selected Female, `r sex_df[3,2]` participants who selected Non-binary/Third gender, and `r sex_df[4,2]` who selected Prefer not to Say.
+
+```{r}
+select_cols <- function(df) {
+  unique(df %>% select(Age,Gender))
+}
+# Use lapply to apply the select_cols function to each data frame
+selected_cols <- lapply(exp_df_names, function(df_name) {
+  df <- get(df_name)
+  select_cols(df)
+})
+# Combine the data frames into a single data frame
+combined_df <- bind_rows(selected_cols) %>% 
+  mutate(Age = as.numeric(as.character(Age)))
+
+```
+
+the mean age is `r round(mean(combined_df$Age,na.rm = T),2)` (SD = `r round(sd(combined_df$Age,na.rm = T),2)`).
+
+## Identify
+
+### Identify 1 Accuracy Analysis
+
+```{r}
+dfacc <- as_tibble(Exp2_ID1_df %>% 
+  dplyr::mutate(acc = ifelse(Individual_FramesNum == acc, 1,0)) %>%
+   dplyr::mutate(across(c("Trial", "Frame_Quantity"),.fns = as.numeric),
+         acc = as.numeric(as.character(acc))) %>% 
+   dplyr::mutate(ResponseId = factor(ResponseId)) %>% 
+  dplyr::select(ResponseId,Trial,Frame_Quantity,time_lim,scale, acc))
+
+mod1 <- glmer(acc ~ Frame_Quantity + time_lim+ scale+(1|ResponseId), data = dfacc, family = binomial(link = "logit"))
+summary(mod1)
+round(confint.merMod(mod1,method = "Wald"),2)
+```
+
+```{r plot 1 exp 2}
+dfsum <- summarySEwithin(data = dfacc, measurevar = "acc",withinvars = c("Frame_Quantity"),betweenvars = c("time_lim","scale"),  idvar = "ResponseId") %>% 
+  dplyr::arrange(Frame_Quantity) %>% 
+  dplyr::mutate(Frame_Quantity = as.factor(Frame_Quantity))
+
+
+id1_plot <- ggplot(dfsum, aes(x=Frame_Quantity, y=acc, fill = time_lim))+ #setting up x and y axes
+    stat_eye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), show_interval = FALSE)+
+    ylab("Accuracy")+ #naming y-axis
+    xlab("Number of Frames")+ #naming x-axis
+    ggtitle("Experiment 2 (ID 1)")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+    # scale_x_continuous(breaks=seq(2, 70, 4))+
+    scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+    geom_smooth(method = lm,se=F) +
+    facet_grid(scale~.) +
+    coord_flip()
+
+id1_plot
+
+#### spencer combine this plot with others -- didn't know if I could bind the frames
+dfsum_scale <- summarySE(data = dfacc, measurevar = "acc", groupvars = c("scale")) 
+
+id1_plot_scale <- ggplot(dfsum_scale, aes(x=scale, y=acc, fill=scale),  show.legend = FALSE)+ #setting up x and y axes
+    stat_halfeye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), alpha = .6, point_size = 0)+
+    ylab("Accuracy")+ #naming y-axis
+    xlab("Scale")+ #naming x-axis
+    ggtitle("Experiment 2 (ID 1)")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+    scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+    geom_smooth(method = lm,se=F)+
+    coord_flip()+
+    theme(legend.position = "none")
+
+id1_plot_scale
+
+###Time
+dfsum_time <- summarySE(data = dfacc, measurevar = "acc", groupvars = c("time_lim")) 
+
+id1_plot_time <- ggplot(dfsum_time, aes(x=time_lim, y=acc, fill=time_lim),  show.legend = FALSE)+ #setting up x and y axes
+    stat_halfeye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), alpha = .6, point_size = 0)+
+    ylab("Accuracy")+ #naming y-axis
+    xlab("Time Limit")+ #naming x-axis
+    ggtitle("Experiment 2 (ID 1)")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+    scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+    geom_smooth(method = lm,se=F)+
+    coord_flip()+
+    theme(legend.position = "none")
+
+id1_plot_time
+```
+
+### Identify 2 Accuracy Analysis
+
+```{r}
+dfacc <- as_tibble(Exp2_ID2_df %>% 
+  dplyr::mutate(acc = ifelse(Individual_FramesNum == Correct_FramesNum, 1,0)) %>%
+   dplyr::mutate(across(c("Trial", "Frame_Quantity"),.fns = as.numeric),
+         acc = as.numeric(as.character(acc))) %>% 
+   dplyr::mutate(ResponseId = factor(ResponseId)) %>% 
+  dplyr::select(ResponseId,Trial,Frame_Quantity,time_lim,scale,acc))
+
+mod1 <- glmer(acc ~ Frame_Quantity+time_lim+scale +(1|ResponseId), data = dfacc, family = binomial(link = "logit"))
+summary(mod1)
+```
+
+```{r plot 2 exp 2}
+dfsum <- summarySEwithin(data = dfacc, measurevar = "acc",withinvars = c("Frame_Quantity"),
+                         betweenvars = c("time_lim","scale"),idvar = "ResponseId") %>% 
+  dplyr::arrange(Frame_Quantity) %>% 
+  dplyr::mutate(Frame_Quantity = as.factor(Frame_Quantity))
+
+id2_plot <- ggplot(dfsum, aes(x=Frame_Quantity, y=acc, fill = time_lim))+ #setting up x and y axes
+    stat_eye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), show_interval = FALSE)+
+    ylab("Accuracy")+ #naming y-axis
+    xlab("Number of Frames")+ #naming x-axis
+    ggtitle("Experiment 2 (ID 2)")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+    # scale_x_continuous(breaks=seq(2, 70, 4))+
+    scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+    geom_smooth(method = lm,se=F) +
+    facet_grid(scale~.) +
+    coord_flip()
+
+id2_plot
+
+
+#### spencer combine this plot with others -- didn't know if I could bind the frames
+dfsum_scale <- summarySE(data = dfacc, measurevar = "acc", groupvars = c("scale")) 
+
+id2_plot_scale <- ggplot(dfsum_scale, aes(x=scale, y=acc, fill=scale),  show.legend = FALSE)+ #setting up x and y axes
+    stat_halfeye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), alpha = .6, point_size = 0)+
+    ylab("Accuracy")+ #naming y-axis
+    xlab("Scale")+ #naming x-axis
+    ggtitle("Experiment 2 (ID 2)")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+    scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+    geom_smooth(method = lm,se=F)+
+    coord_flip()+
+    theme(legend.position = "none")
+
+id2_plot_scale
+
+###Time limit
+
+dfsum_time <- summarySE(data = dfacc, measurevar = "acc", groupvars = c("time_lim")) 
+
+id2_plot_time <- ggplot(dfsum_time, aes(x=time_lim, y=acc, fill=time_lim),  show.legend = FALSE)+ #setting up x and y axes
+    stat_halfeye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), alpha = .6, point_size = 0)+
+    ylab("Accuracy")+ #naming y-axis
+    xlab("Time Limit")+ #naming x-axis
+    ggtitle("Experiment 2 (ID 2)")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+    scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+    geom_smooth(method = lm,se=F)+
+    coord_flip()+
+    theme(legend.position = "none")
+
+id2_plot_time
+```
+
+### Identify 3 Accuracy Analysis
+
+We have a problem Trial for 18 frames - trial 12 (letter N) frame 14 is visually not over the dotted line at 79.5, but the value is 79.507. We are marking this as not a correct response.
+
+```{r}
+dfacc <- as_tibble(Exp2_ID3_df %>% 
+  dplyr::mutate(Correct_Frames = ifelse(geom_hline < Correct_FramesValue, 1,0)) %>%
+  dplyr::mutate(Correct_Frames = ifelse(Frame_Quantity == "18" & Trial == "12" & Individual_FramesNum == "14", 0,Correct_Frames)) %>% 
+  dplyr::mutate(acc = ifelse(Correct_Frames == ResponseCode,1,0)) %>%
+  dplyr::group_by(ResponseId,Frame_Quantity,scale,time_lim,Trial) %>% 
+  dplyr::summarise(acc = ifelse(all(acc == 1),1,0)) %>% 
+  dplyr::mutate(Frame_Quantity = as.numeric(Frame_Quantity),
+                Trial = as.numeric(Trial),
+         acc = as.numeric(as.character(acc)))) %>% 
+  droplevels()
+
+mod1 <- glmer(acc ~ Frame_Quantity + time_lim + scale + (1|Trial)+(1|ResponseId), data = dfacc, family = binomial(link = "logit"))
+summary(mod1)
+round(confint.merMod(mod1,method = "Wald"),2)
+
+tapply(dfacc$acc, INDEX = dfacc[,3],FUN = mean)
+tapply(dfacc$acc, INDEX = dfacc[,3],FUN = sd)
+```
+
+```{r plot 3 exp 2}
+dfsum <- summarySEwithin(data = dfacc, measurevar = "acc",withinvars = c("Frame_Quantity"),
+                         betweenvars = c("time_lim","scale"), idvar = "ResponseId")# %>% 
+
+Id3plot <- ggplot(dfsum, aes(x=Frame_Quantity, y=acc, fill = time_lim))+ #setting up x and y axes
+    stat_eye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), show_interval = FALSE)+
+    ylab("Accuracy")+ #naming y-axis
+    xlab("Number of Frames")+ #naming x-axis
+    ggtitle("Experiment 2 (Over Hline)")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+    # scale_x_continuous(breaks=seq(2, 70, 4))+
+    scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+    # geom_smooth(method = lm,se=F)+
+    facet_grid(scale~.) + 
+    coord_flip()
+Id3plot
+
+#### spencer combine this plot with others -- didn't know if I could bind the frames
+dfsum_scale <- summarySE(data = dfacc, measurevar = "acc", groupvars = c("scale")) 
+
+id3_plot_scale <- ggplot(dfsum_scale, aes(x=scale, y=acc, fill=scale),  show.legend = FALSE)+ #setting up x and y axes
+    stat_halfeye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), alpha = .6, point_size = 0)+
+    ylab("Accuracy")+ #naming y-axis
+    xlab("Scale")+ #naming x-axis
+    ggtitle("Experiment 2 (ID 3)")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+    scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+    geom_smooth(method = lm,se=F)+
+    coord_flip()+
+    theme(legend.position = "none")
+
+id3_plot_scale
+
+#Time limit
+
+dfsum_time <- summarySE(data = dfacc, measurevar = "acc", groupvars = c("time_lim")) 
+
+id3_plot_time <- ggplot(dfsum_time, aes(x=time_lim, y=acc, fill=time_lim),  show.legend = FALSE)+ #setting up x and y axes
+    stat_halfeye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), alpha = .6, point_size = 0)+
+    ylab("Accuracy")+ #naming y-axis
+    xlab("Time Limit")+ #naming x-axis
+    ggtitle("Experiment 2 (ID 3)")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+    scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+    geom_smooth(method = lm,se=F)+
+    coord_flip()+
+    theme(legend.position = "none")
+
+id3_plot_time
+```
+
+## Compare
+
+### Compare 1 Accuracy Analysis
+
+```{r Exp2compare1 acc}
+dfacc <- as_tibble(Exp2_C1_df %>% 
+  dplyr::mutate(acc = ifelse(Individual_FramesNum == Correct_FramesNum, 1,0)) %>% 
+   dplyr::mutate(across(c("Trial", "Frame_Quantity"),.fns = as.numeric),
+         acc = as.numeric(as.character(acc))) %>% 
+   dplyr::mutate(ResponseId = factor(ResponseId)) %>% 
+  dplyr::select(ResponseId,Trial,Frame_Quantity,time_lim,scale,acc))
+
+mod1 <- glmer(acc ~ Frame_Quantity + time_lim + scale+  (1|Trial)+(1|ResponseId), data = dfacc, family = binomial(link = "logit"))
+summary(mod1)
+```
+
+```{r plot 4 exp 2}
+dfsum <- summarySEwithin(data = dfacc, measurevar = "acc",withinvars = c("Frame_Quantity"),
+                         betweenvars = c("time_lim","scale"),idvar = "ResponseId") #%>%
+
+compare1_maxplot <- ggplot(dfsum, aes(x=Frame_Quantity, y=acc, fill = time_lim))+
+    stat_eye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), show_interval = FALSE)+
+    ylab("Accuracy")+ #naming y-axis
+    xlab("Number of Frames")+ #naming x-axis
+    ggtitle("Experiment 1 (Compare 1 Max)")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+    scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+    facet_grid(scale~.)+
+    coord_flip()
+  compare1_maxplot
+  
+  #### spencer combine this plot with others -- didn't know if I could bind the frames
+dfsum_scale <- summarySE(data = dfacc, measurevar = "acc", groupvars = c("scale")) 
+
+compare1_plot_scale <- ggplot(dfsum_scale, aes(x=scale, y=acc, fill=scale),  show.legend = FALSE)+ #setting up x and y axes
+   stat_halfeye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), alpha = .6, point_size = 0)+
+    ylab("Accuracy")+ #naming y-axis
+    xlab("Scale")+ #naming x-axis
+    ggtitle("Experiment 2 (Comp 1)")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+    scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+    geom_smooth(method = lm,se=F)+
+    coord_flip()+
+    theme(legend.position = "none")
+
+compare1_plot_scale
+
+#Time limit
+dfsum_time <- summarySE(data = dfacc, measurevar = "acc", groupvars = c("time_lim")) 
+
+compare1_plot_time <- ggplot(dfsum_time, aes(x=time_lim, y=acc, fill=time_lim),  show.legend = FALSE)+ #setting up x and y axes
+    stat_halfeye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), alpha = .6, point_size = 0)+
+    ylab("Accuracy")+ #naming y-axis
+    xlab("Time Limit")+ #naming x-axis
+    ggtitle("Experiment 2 (Compare 1)")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+    scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+    geom_smooth(method = lm,se=F)+
+    coord_flip()+
+    theme(legend.position = "none")
+
+compare1_plot_time
+```
+
+### Compare 2 Accuracy Analysis
+
+```{r}
+dfacc <- as_tibble(Exp2_C2_df %>% 
+  dplyr::mutate(acc = ifelse(Individual_FramesNum == Correct_FramesNum, 1,0)) %>% 
+   dplyr::mutate(across(c("Trial", "Frame_Quantity"),.fns = as.numeric),
+         acc = as.numeric(as.character(acc))) %>% 
+   dplyr::mutate(ResponseId = factor(ResponseId)) %>% 
+  dplyr::select(ResponseId,Trial,Frame_Quantity,time_lim,scale,acc))
+
+mod1 <- glmer(acc ~ Frame_Quantity +time_lim +scale+  (1|Trial)+(1|ResponseId), data = dfacc, family = binomial(link = "logit"))
+summary(mod1)
+```
+
+```{r plot 5 exp 2}
+dfsum <- summarySEwithin(data = dfacc, measurevar = "acc",withinvars = c("Frame_Quantity"),
+                         betweenvars = c("time_lim","scale"),idvar = "ResponseId") #%>%
+
+compare2_mrplot <- ggplot(dfsum, aes(x=Frame_Quantity, y=acc, fill = time_lim))+ #setting up x and y axes
+    stat_eye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), show_interval = FALSE)+
+    ylab("Accuracy")+ #naming y-axis
+    xlab("Number of Frames")+ #naming x-axis
+    ggtitle("Experiment 2 (Compare 2 MeanRange)")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+    scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+    facet_grid(scale~.)+
+    coord_flip()
+compare2_mrplot
+
+
+  #### spencer combine this plot with others -- didn't know if I could bind the frames
+dfsum_scale <- summarySE(data = dfacc, measurevar = "acc", groupvars = c("scale")) 
+
+compare2_plot_scale <- ggplot(dfsum_scale, aes(x=scale, y=acc, fill=scale),  show.legend = FALSE)+ #setting up x and y axes
+    stat_halfeye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), alpha = .6, point_size = 0)+
+    ylab("Accuracy")+ #naming y-axis
+    xlab("Scale")+ #naming x-axis
+    ggtitle("Experiment 2 (Comp 2)")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+    scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+    geom_smooth(method = lm,se=F)+
+    coord_flip()+
+    theme(legend.position = "none")
+
+compare2_plot_scale
+
+#Time limit
+dfsum_time <- summarySE(data = dfacc, measurevar = "acc", groupvars = c("time_lim")) 
+
+compare2_plot_time <- ggplot(dfsum_time, aes(x=time_lim, y=acc, fill=time_lim),  show.legend = FALSE)+ #setting up x and y axes
+    stat_halfeye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), alpha = .6, point_size = 0)+
+    ylab("Accuracy")+ #naming y-axis
+    xlab("Time Limit")+ #naming x-axis
+    ggtitle("Experiment 2 (Compare 2)")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+    scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+    geom_smooth(method = lm,se=F)+
+    coord_flip()+
+    theme(legend.position = "none")
+
+compare2_plot_time
+
+
+```
+
+## Summarize
+
+### Summarize 1 Accuracy Analysis
+
+```{r}
+dfacc <- as_tibble(Exp2_S1_df %>% 
+  dplyr::mutate(acc = ifelse(ResponseCode == Correct_FramesNum, 1,0)) %>%
+   dplyr::mutate(across(c("Trial", "Frame_Quantity"),.fns = as.numeric),
+         acc = as.numeric(as.character(acc))) %>% 
+   dplyr::mutate(ResponseId = factor(ResponseId)) %>% 
+  dplyr::select(ResponseId,Trial,Frame_Quantity,time_lim,scale,acc))
+
+mod1 <- glmer(acc ~ Frame_Quantity +time_lim+scale+(1|ResponseId), data = dfacc, family = binomial(link = "logit"))
+summary(mod1)
+```
+
+```{r pot 6 exp 2}
+dfsum <- summarySEwithin(data = dfacc, measurevar = "acc",withinvars = c("Frame_Quantity"),
+                         betweenvars = c("time_lim","scale"),idvar = "ResponseId") #%>%
+
+summ1_plot <- ggplot(dfsum, aes(x=Frame_Quantity, y=acc, fill=time_lim))+ #setting up x and y axes
+    stat_eye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), show_interval = FALSE)+
+    ylab("Accuracy")+ #naming y-axis
+    xlab("Number of Frames")+ #naming x-axis
+    ggtitle("Experiment 1 (Summary 1)")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+    scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+    geom_smooth(method = lm,se=F)+
+    facet_grid(scale~.)+
+    coord_flip()
+
+summ1_plot
+
+  #### spencer combine this plot with others -- didn't know if I could bind the frames
+dfsum_scale <- summarySE(data = dfacc, measurevar = "acc", groupvars = c("scale")) 
+
+summ1_plot_scale <- ggplot(dfsum_scale, aes(x=scale, y=acc, fill=scale),  show.legend = FALSE)+ #setting up x and y axes
+    stat_halfeye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), alpha = .6, point_size = 0)+
+    ylab("Accuracy")+ #naming y-axis
+    xlab("Scale")+ #naming x-axis
+    ggtitle("Experiment 2 (Sum 1)")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+    scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+    geom_smooth(method = lm,se=F)+
+    coord_flip()+
+    theme(legend.position = "none")
+
+summ1_plot_scale
+
+#Time limit
+dfsum_time <- summarySE(data = dfacc, measurevar = "acc", groupvars = c("time_lim")) 
+
+summ1_plot_time <- ggplot(dfsum_time, aes(x=time_lim, y=acc, fill=time_lim),  show.legend = FALSE)+ #setting up x and y axes
+    stat_halfeye(aes(y = acc,  dist = "norm", arg1 = acc, arg2 = se), alpha = .6, point_size = 0)+
+    ylab("Accuracy")+ #naming y-axis
+    xlab("Time Limit")+ #naming x-axis
+    ggtitle("Experiment 2 (Summ 1)")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+    scale_y_continuous(limits=c(0,1.1),breaks=seq(0, 1, .1)) +
+    geom_smooth(method = lm,se=F)+
+    coord_flip()+
+    theme(legend.position = "none")
+
+summ1_plot_time
+
+grid.arrange(summ1_plot_scale,summ1_plot_time )
+```
+
+### Summarize 2 Error Analysis
+
+```{r}
+dfacc <- as_tibble(Exp2_S2_df %>% 
+  dplyr::mutate(error = abs(as.numeric(Response,na.rm = T) - as.numeric(Correct_Mean,na.rm = T))) %>%
+    dplyr::mutate(error = 1 - error/MaxRange) %>% 
+    dplyr::filter(error < 3*sd(error)+ mean(error), error > 0) %>% 
+   dplyr::mutate(across(c("Trial", "Frame_Quantity","time_lim"),.fns = as.numeric),
+         acc = as.numeric(as.character(error))) %>% 
+   dplyr::mutate(ResponseId = factor(ResponseId)) %>% 
+  dplyr::select(ResponseId,Trial,Frame_Quantity,time_lim,scale,error))
+
+mod1 <- lmer(error ~ Frame_Quantity+time_lim*scale +  (1|Trial)+(1|ResponseId), data = dfacc)
+summary(mod1)
+```
+
+```{r plot 7 exp 2}
+dfsum <- summarySEwithin(data = dfacc, measurevar = "error",withinvars = c("Frame_Quantity"),
+                         betweenvars = c("time_lim","scale"), idvar = "ResponseId") %>% 
+  arrange(Frame_Quantity) %>% 
+  mutate(Frame_Quantity = as.factor(Frame_Quantity))
+
+summ2_plot <- ggplot(dfsum, aes(x=Frame_Quantity, y=error, fill = time_lim))+ #setting up x and y axes
+    stat_eye(aes(y = error,  dist = "norm", arg1 = error, arg2 = se), show_interval = FALSE)+
+    ylab("Proportional Accuracy")+ #naming y-axis
+    xlab("Number of Frames")+ #naming x-axis
+    ggtitle("Experiment 1 (Summary 2)")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+    facet_grid(scale~.) +
+    coord_flip()
+
+summ2_plot
+
+  #### spencer combine this plot with others -- didn't know if I could bind the frames
+dfsum_scale <- summarySE(data = dfacc, measurevar = "error", groupvars = c("scale")) 
+
+summ2_plot_scale <- ggplot(dfsum_scale, aes(x=scale, y=error, fill=scale),  show.legend = FALSE)+ #setting up x and y axes
+    stat_halfeye(aes(y = error,  dist = "norm", arg1 = error, arg2 = se), alpha = .6, point_size = 0)+
+    ylab("Proportional Accuracy (0-1)")+ #naming y-axis
+    xlab("Scale")+ #naming x-axis
+    ggtitle("Experiment 2 (Sum 2)")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+    geom_smooth(method = lm,se=F)+
+    scale_y_continuous(limits=c(0,1),breaks=seq(0, 1, .1)) +
+    coord_flip()+
+    theme(legend.position = "none")
+
+summ2_plot_scale
+
+#Time limit
+dfsum_time <- summarySE(data = dfacc, measurevar = "error", groupvars = c("time_lim")) 
+
+summ2_plot_time <- ggplot(dfsum_time, aes(x=time_lim, y=error, fill=time_lim),  show.legend = FALSE)+ #setting up x and y axes
+    stat_halfeye(aes(y = error,  dist = "norm", arg1 = error, arg2 = se), alpha = .6, point_size = 0)+
+    ylab("Proportional Accuracy (0-1)")+ #naming y-axis
+    xlab("Time Limit")+ #naming x-axis
+    ggtitle("Experiment 2 (Summ 2)")+  #naming the figure (or the plot)
+    theme_tidybayes() + #theme of the plot
+     scale_y_continuous(limits=c(0,1),breaks=seq(0, 1, .1)) +
+    geom_smooth(method = lm,se=F)+
+    coord_flip()+
+    theme(legend.position = "none")
+
+summ2_plot_time
+```
+
+# Experiment 2 - 7 Tasks
+
+## Fixed vs Full Scale
+
+```{r, fig.height = 18, fig.width = 16, fig.align = "center"}
+ # pdf(file = "figures/Experiment2_Scale.pdf", width = 5, height=10) #saving figure
+grid.arrange(id1_plot_scale,id2_plot_scale, id3_plot_scale, compare1_plot_scale,  compare2_plot_scale, summ1_plot_scale, summ2_plot_scale,ncol = 1)
+  # dev.off()
+```
+
+## Time Limit vs No Time Limit
+
+```{r, fig.height = 18, fig.width = 16, fig.align = "center"}
+ # pdf(file = "figures/Experiment2_Time.pdf", width = 5, height=10) #saving figure
+grid.arrange(id1_plot_time,id2_plot_time, id3_plot_time, compare1_plot_time,  compare2_plot_time, summ1_plot_time, summ2_plot_time,ncol = 1)
+  # dev.off()
+
+```
